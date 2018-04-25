@@ -3,8 +3,9 @@
 import map_hdf5
 import file_scraper
 from emissions import possible_emissions
+import fitting_tools as ft
+
 import numpy as np
-import scipy.optimize as opto
 import sys
 #import math
 import matplotlib.pyplot as plt
@@ -41,20 +42,6 @@ def get_sum_spectrum(fid):
     spectrum_sum_scal_mapped = spectrum_sum_scal_mapped #- 8.0 
     return one_ev_energy_axis, spectrum_sum_scal_mapped
 
-def get_background(x, spectrum, offset=0):
-    x = np.array(x, dtype=float)
-    #p0 is seed parameters
-    popt, pcov = opto.curve_fit(exp_func, x, spectrum, p0=(0.01, 31, 35))
-    a,b,c,= popt
-    print a,b,c
-    background_exp = exp_func(x, a, b, c+offset)
-
-    back_sub_fit = spectrum - background_exp 
-    plt.plot(x, spectrum, 'r', label='Original Data')
-    plt.plot(x, background_exp, 'k', label='Fiti DARREN Data')
-    plt.plot(x, back_sub_fit, 'g', label='Fit DARREN Data')
-    return background_exp 
-
 def get_scale(curve, data):
     results_list = []
     scale_list = []
@@ -64,7 +51,7 @@ def get_scale(curve, data):
     if np.abs(c_idx - d_idx) > 7000:
        print 'WARNING THIS HAPPENED'
        return 0.0
-    for pos_scale in np.linspace(0,300,10001):
+    for pos_scale in np.linspace(0,1000,10001):
         result = np.abs(data - (pos_scale*curve))
 	sumit =  np.sum(result)
         if sumit < 0.0:
@@ -75,15 +62,6 @@ def get_scale(curve, data):
     minima = np.min(results_list)
     idx = results_list.index(minima)
     return scale_list[idx]
-
-def base_spectra(x, params_list, spread=80, offset=0):
-    multi_gauss = np.zeros(len(x))
-    adder = int(len(params_list)/2)
-    for i in range(adder):
-        A = params_list[i]
-        mu = params_list[i+adder]
-        multi_gauss += gauss_func(x, A, spread, mu+offset)
-    return multi_gauss 
     
 def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list):
     per_tab_dict = file_scraper.get_per_tab_dict()
@@ -132,7 +110,7 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
                mu_list.append(emis_line)
 
         params_list = A_list + mu_list 
-        base = base_spectra(emis_nrg_axis, params_list, spread, offset) 
+        base = ft.base_spectra(emis_nrg_axis, params_list, spread, offset) 
         if len(A_list) == 0:
             continue
         else:
@@ -190,7 +168,6 @@ def main(*args):
     #Get the Sum Spectra vs Energy from the hdf5 file
     vortex_nrg_axis, sum_spec = get_sum_spectrum(fid)
     #Get emission line standards
-    per_tab_dict = get_per_tab_dict()
    
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1, axisbg='0.2')
@@ -204,13 +181,13 @@ def main(*args):
     ax.plot(emis_nrg_axis, sum_spec_cut, c='k', label='sum_spec_cut')
     #baseline_values = pks.baseline(sum_spec_cut, deg = 12)
     #ax.plot(emis_nrg_axis, baseline_values, '-', color='b', label='peakutils baseline')
-    #background_data = get_background(emis_nrg_axis, sum_spec_cut)
+    #background_data = ft.get_background(emis_nrg_axis, sum_spec_cut)
     scale_dict = get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list)
     print scale_dict 
     total = np.zeros((1, len(emis_nrg_axis)))
     print spread, offset 
     plt.legend(loc='upper left')
-    fig.show(block=False)
+    #fig.show(block=False)
 
     if mapme:
         try:

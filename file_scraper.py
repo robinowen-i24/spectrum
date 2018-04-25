@@ -2,10 +2,12 @@ import os
 import re
 import sys
 import h5py
+import collections
+import numpy as np
 
 def bne():
     approximates = [100,61,23,12,9,60,100,11,68,26,15,100]
-    f = open('bne.dat','r')
+    f = open('lookup_tables/bne.dat','r')
     bne = collections.defaultdict(dict)
     for line in f.readlines():
         if line.startswith('b'):
