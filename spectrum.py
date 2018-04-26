@@ -33,8 +33,8 @@ def argparser():
                         help='spread/width of fluoresence peaks, defualt=100')
     parser.add_argument('-c', '--scale_cutoff',  type=float, default = 2.5,
                         help='minimum scale cutoff to remove incorrect peaks, defualt=2.5')
-    parser.add_argument('-mp', '--mapme',  type=bool, default = True, choices = [True, False],
-                        help='flag to run element mapping on data, default=On')
+    parser.add_argument('-mp', '--mapme',  type=bool, default = False,
+                        help='flag to run element mapping on data, default=False')
     parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
                         help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
     args=parser.parse_args() 
