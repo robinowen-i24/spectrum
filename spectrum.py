@@ -73,10 +73,11 @@ def get_scale(curve, data):
     c_idx = np.where(curve == np.max(curve))[0][0]
     d_idx = np.where(data == np.max(data))[0][0]
     peak_pos_err = np.abs(c_idx-d_idx)
-    if np.abs(c_idx - d_idx) > 7000:
-       print 'WARNING THIS HAPPENED'
-       return 0.0
-    for pos_scale in np.linspace(0,1000,10001):
+    # remove or understand
+    #if np.abs(c_idx - d_idx) > 7000:
+    #   print 'WARNING THIS HAPPENED'
+    #   return 0.0
+    for pos_scale in np.linspace(0,9999,10001):
         result = np.abs(data - (pos_scale*curve))
 	sumit =  np.sum(result)
         if sumit < 0.0:
