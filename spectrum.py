@@ -7,6 +7,7 @@ import fitting_tools as ft
 
 import numpy as np
 import sys
+from os.path import isfile 
 import argparse
 #import math
 import matplotlib.pyplot as plt
@@ -22,9 +23,9 @@ def argparser():
                         help='hdf5 file location, i.e. /path/to/my/file.hdf5')
     parser.add_argument('-ie', '--incident_energy',  type=int, default = 20000,
                         help='incident energy of beam, defualt=20000')
-    parser.add_argument('-i', '--include_list',  type=str, nargs='+',
+    parser.add_argument('-i', '--include_list',  type=str, nargs='+', default = [],
                         help='list of elements to include i.e. Fe K Ni')
-    parser.add_argument('-e', '--exclude_list',  type=str, nargs='+',
+    parser.add_argument('-e', '--exclude_list',  type=str, nargs='+', default = [],
                         help='list of elements to exclude i.e. Os W Ti or all')
     parser.add_argument('-o', '--offset',  type=float, default = -4.0,
                         help='fluoresence peak offset, defualt=-4.0')
@@ -41,6 +42,15 @@ def argparser():
        print "that's one powerful beam: " + str(args.incident_energy) + "kev"
     if args.scale_cutoff <= 0.0:
        parser.error("scale_cutoff cannot be < = 0. No elements removed")
+    if args.incident_energy <= args.minimum_energy:
+       parser.error("Incident energy must be greater than minimum energy")
+    if args.input_file.endswith('.hdf5'):
+       if isfile(args.input_file):
+          print("I exist")
+       else:
+          parser.error("File does not exist")
+    else:
+         parser.error("File type should be hdf5, file does not end in hdf5")
     return args                                      
 
 def get_sum_spectrum(fid):
@@ -168,10 +178,10 @@ def main(args):
     mapme=args.mapme
     spread=args.spread
     offset=args.offset
-    include_list=list(args.include_list)
-    exclude_list=list(args.exclude_list)
-    for arg in args:
-        print arg
+    include_list=args.include_list
+    exclude_list=args.exclude_list
+    for arg in vars(args):
+        print arg, getattr(args, arg)
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
 
     #Get the Sum Spectra vs Energy from the hdf5 file
@@ -208,7 +218,7 @@ def main(args):
     print 'EOM'
 
 if __name__ == '__main__':
-    args=argparser()
+    args = argparser()
     main(args)
     #main(*sys.argv[1:])
 
