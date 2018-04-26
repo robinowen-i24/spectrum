@@ -111,8 +111,8 @@ def mapme(fid, scale_dict, cutoff, include_list):
 
     array = file_scraper.get_h5py_data(fid)
    
-    shp_array = shape_array(array, [xdim,ydim])
-    #shp_array = shape_array(array, [xdim,ydim]) - 15.0  
+    #shp_array = shape_array(array, [xdim,ydim])
+    shp_array = shape_array(array, [xdim,ydim])# - 15.0  
     print 'shaped array', shp_array.shape
     result_array = shp_array 
 

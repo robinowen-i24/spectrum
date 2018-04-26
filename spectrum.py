@@ -5,11 +5,10 @@ import file_scraper
 from emissions import possible_emissions
 import fitting_tools as ft
 
-import numpy as np
 import sys
-from os.path import isfile 
 import argparse
-#import math
+import numpy as np
+from os.path import isfile 
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from matplotlib.colors import LinearSegmentedColormap
@@ -33,32 +32,33 @@ def argparser():
                         help='spread/width of fluoresence peaks, defualt=100')
     parser.add_argument('-c', '--scale_cutoff',  type=float, default = 2.5,
                         help='minimum scale cutoff to remove incorrect peaks, defualt=2.5')
-    parser.add_argument('-mp', '--mapme',  type=bool, default = True, choices = [True, False],
+    parser.add_argument('-mp', '--mapme',  type=bool, default=True, choices=[True, False],
                         help='flag to run element mapping on data, default=On')
     parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
                         help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
+    parser.add_argument('-indv', '--plot_indv',  type=bool, default=False, choices=[True, False],
+                        help='If you wish to see the individual spectrum from each point in the grid')
     args=parser.parse_args() 
-    if args.incident_energy >= 15000:
-       print "that's one powerful beam: " + str(args.incident_energy) + "kev"
     if args.scale_cutoff <= 0.0:
        parser.error("scale_cutoff cannot be < = 0. No elements removed")
     if args.incident_energy <= args.minimum_energy:
        parser.error("Incident energy must be greater than minimum energy")
     if args.input_file.endswith('.hdf5'):
        if isfile(args.input_file):
-          print("I exist")
+           pass
        else:
           parser.error("File does not exist")
     else:
          parser.error("File type should be hdf5, file does not end in hdf5")
     return args                                      
 
-def get_sum_spectrum(fid):
+def get_sum_spectrum(fid, plot_indv):
     print fid 
     full_file_array = file_scraper.get_h5py_data(fid)
 
     indv_spectra_array = full_file_array[:,0,:]
-    plt.plot(indv_spectra_array.T)
+    if plot_indv == True:
+        plt.plot(indv_spectra_array.T)
     num_of_spectra = indv_spectra_array.shape[0]
     num_of_bins    = indv_spectra_array.shape[1]
     print 'Number of spectra', num_of_spectra
@@ -78,7 +78,7 @@ def get_sum_spectrum(fid):
 
     #shift vertically
     
-    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped #- 8.0 
+    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped - 8.0 
     return one_ev_energy_axis, spectrum_sum_scal_mapped
 
 def get_scale(curve, data):
@@ -172,20 +172,21 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
 
 def main(args):
     fid=args.input_file
-    minimum_nrg = args.minimum_energy
-    incident_nrg=args.incident_energy
-    cutoff=args.scale_cutoff
-    mapme=args.mapme
-    spread=args.spread
-    offset=args.offset
-    include_list=args.include_list
-    exclude_list=args.exclude_list
+    minimum_nrg  = args.minimum_energy
+    incident_nrg = args.incident_energy
+    cutoff       = args.scale_cutoff
+    mapme        = args.mapme
+    spread       = args.spread
+    offset       = args.offset
+    include_list = args.include_list
+    exclude_list = args.exclude_list
+    plot_indv    = args.plot_indv
     for arg in vars(args):
         print arg, getattr(args, arg)
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
 
     #Get the Sum Spectra vs Energy from the hdf5 file
-    vortex_nrg_axis, sum_spec = get_sum_spectrum(fid)
+    vortex_nrg_axis, sum_spec = get_sum_spectrum(fid, plot_indv)
     #Get emission line standards
    
     fig = plt.figure()
