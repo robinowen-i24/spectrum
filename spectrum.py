@@ -39,6 +39,8 @@ def argparser():
     args=parser.parse_args() 
     if args.incident_energy >= 15000:
        print "that's one powerful beam: " + str(args.incident_energy) + "kev"
+    if args.scale_cutoff <= 0.0:
+       parser.error("scale_cutoff cannot be < = 0. No elements removed")
     return args                                      
 
 def get_sum_spectrum(fid):
