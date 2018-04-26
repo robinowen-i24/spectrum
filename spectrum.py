@@ -37,6 +37,8 @@ def argparser():
     parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
                         help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
     args=parser.parse_args() 
+    if args.incident_energy >= 15000:
+       print "that's one powerful beam: " + str(args.incident_energy) + "kev"
     return args                                      
 
 def get_sum_spectrum(fid):
