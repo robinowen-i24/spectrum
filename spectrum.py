@@ -165,14 +165,8 @@ def main(args):
     offset=args.offset
     include_list=list(args.include_list)
     exclude_list=list(args.exclude_list)
-<<<<<<< HEAD
     for arg in args:
         print arg
-=======
-    print fid
-    print exclude_list 
-    print include_list 
->>>>>>> e859e3b0589c2f79c3e3808774ca356550cb9d86
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
 
     #Get the Sum Spectra vs Energy from the hdf5 file
