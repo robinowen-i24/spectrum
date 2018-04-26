@@ -7,12 +7,39 @@ import fitting_tools as ft
 
 import numpy as np
 import sys
+import argparse
 #import math
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from matplotlib.colors import LinearSegmentedColormap
 #import peakutils as pks
 
+def argparser():
+    parser = argparse.ArgumentParser(description='SPECTRUM \n\
+                                                  Fluoresence spectra analysis and element mapping \n\
+                                                  https://github.com/DarrenSherrell/spectrum')
+    parser.add_argument('input_file', metavar='fid', type=str,
+                        help='hdf5 file location, i.e. /path/to/my/file.hdf5')
+    parser.add_argument('-ie', '--incident_energy',  type=int, default = 20000,
+                        help='incident energy of beam, defualt=20000')
+    parser.add_argument('-i', '--include_list',  type=str, nargs='+',
+                        help='list of elements to include i.e. Fe K Ni')
+    parser.add_argument('-e', '--exclude_list',  type=str, nargs='+',
+                        help='list of elements to exclude i.e. Os W Ti or all')
+    parser.add_argument('-o', '--offset',  type=float, default = -4.0,
+                        help='fluoresence peak offset, defualt=-4.0')
+    parser.add_argument('-s', '--spread',  type=float, default = 100.0,
+                        help='spread/width of fluoresence peaks, defualt=100')
+    parser.add_argument('-c', '--scale_cutoff',  type=float, default = 2.5,
+                        help='minimum scale cutoff to remove incorrect peaks, defualt=2.5')
+    parser.add_argument('-mp', '--mapme',  type=bool, default = True,
+                        help='flag to run element mapping on data, defualt=True')
+    parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
+                        help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
+    args=parser.parse_args() 
+    if args.incident_energy >= 15000:
+       print "that's one powerful beam: " + str(args.incident_energy) + "kev"
+    return args                                      
 
 def get_sum_spectrum(fid):
     print fid 
@@ -48,10 +75,11 @@ def get_scale(curve, data):
     c_idx = np.where(curve == np.max(curve))[0][0]
     d_idx = np.where(data == np.max(data))[0][0]
     peak_pos_err = np.abs(c_idx-d_idx)
-    if np.abs(c_idx - d_idx) > 7000:
-       print 'WARNING THIS HAPPENED'
-       return 0.0
-    for pos_scale in np.linspace(0,1000,10001):
+    # remove or understand
+    #if np.abs(c_idx - d_idx) > 7000:
+    #   print 'WARNING THIS HAPPENED'
+    #   return 0.0
+    for pos_scale in np.linspace(0,9999,10001):
         result = np.abs(data - (pos_scale*curve))
 	sumit =  np.sum(result)
         if sumit < 0.0:
@@ -130,40 +158,19 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
         print
     return scale_dict
 
-def main(*args):
-    minimum_nrg = 2000
-    incident_nrg = 20000
-    cutoff = 2.5
-    mapme = False
-    spread = 100.0
-    offset = -4.0
-    exclude_list = []
-    include_list = []
+def main(args):
+    fid=args.input_file
+    minimum_nrg = args.minimum_energy
+    incident_nrg=args.incident_energy
+    cutoff=args.scale_cutoff
+    mapme=args.mapme
+    spread=args.spread
+    offset=args.offset
+    include_list=list(args.include_list)
+    exclude_list=list(args.exclude_list)
     for arg in args:
         print arg
-        k = arg.split("=")[0]
-        v = arg.split("=")[1]
-        if 'file' in k:
-            fid = v
-	elif 'energy' in k:
-	    incident_nrg = float(v)
-        elif 'map' in k:
-            mapme = True
-        elif 'exclude' in k:
-            exclude_list = v.lstrip('[').rstrip(']').split(',')
-        elif 'include' in k:
-            include_list = v.lstrip('[').rstrip(']').split(',')
-        elif 'cutoff' in k:
-            cutoff = float(v)
-        elif 'offset' in k:
-            offset = float(v)
-        elif 'spread' in k:
-            spread = float(v)
-
-    print exclude_list 
-    print include_list 
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
-    print '\n\n'
 
     #Get the Sum Spectra vs Energy from the hdf5 file
     vortex_nrg_axis, sum_spec = get_sum_spectrum(fid)
@@ -199,7 +206,9 @@ def main(*args):
     print 'EOM'
 
 if __name__ == '__main__':
-    main(*sys.argv[1:])
+    args=argparser()
+    main(args)
+    #main(*sys.argv[1:])
 
 plt.close()
 print 'EOP'
