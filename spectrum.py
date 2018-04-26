@@ -165,11 +165,10 @@ def main(args):
     offset=args.offset
     include_list=list(args.include_list)
     exclude_list=list(args.exclude_list)
-
+    print fid
     print exclude_list 
     print include_list 
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
-    print '\n\n'
 
     #Get the Sum Spectra vs Energy from the hdf5 file
     vortex_nrg_axis, sum_spec = get_sum_spectrum(fid)
