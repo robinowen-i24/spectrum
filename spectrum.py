@@ -5,11 +5,10 @@ import file_scraper
 from emissions import possible_emissions
 import fitting_tools as ft
 
-import numpy as np
 import sys
-from os.path import isfile 
 import argparse
-#import math
+import numpy as np
+from os.path import isfile 
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from matplotlib.colors import LinearSegmentedColormap
@@ -23,42 +22,43 @@ def argparser():
                         help='hdf5 file location, i.e. /path/to/my/file.hdf5')
     parser.add_argument('-ie', '--incident_energy',  type=int, default = 20000,
                         help='incident energy of beam, defualt=20000')
+    parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
+                        help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
     parser.add_argument('-i', '--include_list',  type=str, nargs='+', default = [],
                         help='list of elements to include i.e. Fe K Ni')
     parser.add_argument('-e', '--exclude_list',  type=str, nargs='+', default = [],
                         help='list of elements to exclude i.e. Os W Ti or all')
-    parser.add_argument('-o', '--offset',  type=float, default = -4.0,
-                        help='fluoresence peak offset, defualt=-4.0')
-    parser.add_argument('-s', '--spread',  type=float, default = 100.0,
-                        help='spread/width of fluoresence peaks, defualt=100')
+    parser.add_argument('-o', '--offset',  type=float, default = -20.0,
+                        help='fluoresence peak offset, defualt=-20.0')
+    parser.add_argument('-s', '--spread',  type=float, default = 110.0,
+                        help='spread/width of fluoresence peaks, defualt=110')
     parser.add_argument('-c', '--scale_cutoff',  type=float, default = 2.5,
                         help='minimum scale cutoff to remove incorrect peaks, defualt=2.5')
-    parser.add_argument('-mp', '--mapme',  type=bool, default = False,
-                        help='flag to run element mapping on data, default=False')
-    parser.add_argument('-me', '--minimum_energy',  type=int, default = 2000,
-                        help='mimimum energy cutoff for fluoresence spectra, defualt=2000')
+    parser.add_argument('-mp', '--mapme',  type=str, default='True',
+                        help='flag to run element mapping on data, default=True')
+    parser.add_argument('-indv', '--plot_indv',  type=bool, default=False, choices=[True, False],
+                        help='If you wish to see the individual spectrum from each point in the grid')
     args=parser.parse_args() 
-    if args.incident_energy >= 15000:
-       print "that's one powerful beam: " + str(args.incident_energy) + "kev"
     if args.scale_cutoff <= 0.0:
        parser.error("scale_cutoff cannot be < = 0. No elements removed")
     if args.incident_energy <= args.minimum_energy:
        parser.error("Incident energy must be greater than minimum energy")
     if args.input_file.endswith('.hdf5'):
        if isfile(args.input_file):
-          print("I exist")
+           pass
        else:
           parser.error("File does not exist")
     else:
          parser.error("File type should be hdf5, file does not end in hdf5")
     return args                                      
 
-def get_sum_spectrum(fid):
+def get_sum_spectrum(fid, plot_indv):
     print fid 
     full_file_array = file_scraper.get_h5py_data(fid)
 
     indv_spectra_array = full_file_array[:,0,:]
-    plt.plot(indv_spectra_array.T)
+    if plot_indv == True:
+        plt.plot(indv_spectra_array.T)
     num_of_spectra = indv_spectra_array.shape[0]
     num_of_bins    = indv_spectra_array.shape[1]
     print 'Number of spectra', num_of_spectra
@@ -78,7 +78,7 @@ def get_sum_spectrum(fid):
 
     #shift vertically
     
-    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped #- 8.0 
+    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped - 8.0 
     return one_ev_energy_axis, spectrum_sum_scal_mapped
 
 def get_scale(curve, data):
@@ -106,18 +106,16 @@ def get_scale(curve, data):
 def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list):
     per_tab_dict = file_scraper.get_per_tab_dict()
     fig = plt.figure()
-    ax = fig.add_subplot(1,1,1, axisbg='0.2')
+    ax = fig.add_subplot(1,1,1, facecolor='0.2')
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0.0, hspace=0.0)
     ax.plot(vortex_nrg_axis, sum_spec, c='w', lw=1)
     scale_dict = {}
     
-    print '\n\n'
-    print per_tab_dict.keys()
-    print include_list
     if 'all' in exclude_list:
         exclude_list = set.difference(set(per_tab_dict.keys()), set(include_list))
     
     print 'EXCLUDE LIST', exclude_list
+    print '\nINCLUDE LIST', include_list
     for elem, emis_dict in poss_emis_dict.items():
         if elem in exclude_list:
             continue
@@ -137,7 +135,7 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
         hi_index = np.where(vortex_nrg_axis==maxi)[0][0]
         sum_spec_cut = sum_spec[lo_index:hi_index]
 
-        A_list = []
+        amp_list = []
         mu_list = []
         for line_type in poss_emis_dict[elem].keys():
             emis_line, rel_int = poss_emis_dict[elem][line_type]
@@ -146,12 +144,12 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
             if int(emis_line) not in emis_nrg_axis :
                 continue
             else:
-               A_list.append(rel_int)
+               amp_list.append(rel_int)
                mu_list.append(emis_line)
 
-        params_list = A_list + mu_list 
+        params_list = amp_list + mu_list 
         base = ft.base_spectra(emis_nrg_axis, params_list, spread, offset) 
-        if len(A_list) == 0:
+        if len(amp_list) == 0:
             continue
         else:
             scale_result = get_scale(base, sum_spec_cut)
@@ -159,56 +157,56 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
                 continue
 		#scale_dict[elem] = 0.0
 	    else: 
-                print elem, 'ELEMENT'
-                print 'A_list', A_list 
-                print 'mu_list', mu_list
-                print 'scale', scale_result, 'cutoff', cutoff
+                print elem, '\t', scale_result, '\t', amp_list, mu_list, 'cutoff', cutoff
 	        scale_dict[elem] = scale_result
                 #ax.plot(emis_nrg_axis, base, c=elem_color)
                 ax.plot(emis_nrg_axis, scale_result*base, c=elem_color,lw=3, label=elem)
                 ax.plot(emis_nrg_axis, sum_spec_cut, c='k')
-        print
+                x = emis_nrg_axis[np.argmax(base)]
+                y = max(scale_result*base)
+                ax.annotate(elem, xy=(x,y), xycoords='data', xytext=(2,2), textcoords='offset points', color=elem_color, fontsize=15)
     return scale_dict
 
 def main(args):
     fid=args.input_file
-    minimum_nrg = args.minimum_energy
-    incident_nrg=args.incident_energy
-    cutoff=args.scale_cutoff
-    mapme=args.mapme
-    spread=args.spread
-    offset=args.offset
-    include_list=args.include_list
-    exclude_list=args.exclude_list
+    minimum_nrg  = args.minimum_energy
+    incident_nrg = args.incident_energy
+    cutoff       = args.scale_cutoff
+    mapme        = args.mapme
+    spread       = args.spread
+    offset       = args.offset
+    include_list = args.include_list
+    exclude_list = args.exclude_list
+    plot_indv    = args.plot_indv
     for arg in vars(args):
         print arg, getattr(args, arg)
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
 
     #Get the Sum Spectra vs Energy from the hdf5 file
-    vortex_nrg_axis, sum_spec = get_sum_spectrum(fid)
-    #Get emission line standards
-   
-    fig = plt.figure()
-    ax = fig.add_subplot(1,1,1, axisbg='0.2')
-    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0.0, hspace=0.0)
+    vortex_nrg_axis, sum_spec = get_sum_spectrum(fid, plot_indv)
 
     mini, maxi = int(minimum_nrg), int(incident_nrg)
     emis_nrg_axis = np.arange(mini, maxi, 1)
-    lo_index = np.where(vortex_nrg_axis==mini)[0][0]
-    hi_index = np.where(vortex_nrg_axis==maxi)[0][0]
-    sum_spec_cut = sum_spec[lo_index:hi_index]
-    ax.plot(emis_nrg_axis, sum_spec_cut, c='k', label='sum_spec_cut')
-    #baseline_values = pks.baseline(sum_spec_cut, deg = 12)
-    #ax.plot(emis_nrg_axis, baseline_values, '-', color='b', label='peakutils baseline')
-    #background_data = ft.get_background(emis_nrg_axis, sum_spec_cut)
+ 
+    plot_sum_spec = 0 
+    if plot_sum_spec == 1: 
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1, axisbg='0.2')
+        fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0.0, hspace=0.0)
+        lo_index = np.where(vortex_nrg_axis==mini)[0][0]
+        hi_index = np.where(vortex_nrg_axis==maxi)[0][0]
+        sum_spec_cut = sum_spec[lo_index:hi_index]
+        ax.plot(emis_nrg_axis, sum_spec_cut, c='r', label='sum_spec_cut')
+        baseline_values = pks.baseline(sum_spec_cut, deg = 12)
+        ax.plot(emis_nrg_axis, baseline_values, '-', color='b', label='peakutils baseline')
+        background_data = ft.get_background(emis_nrg_axis, sum_spec_cut)
+
     scale_dict = get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list)
     print scale_dict 
     total = np.zeros((1, len(emis_nrg_axis)))
     print spread, offset 
-    plt.legend(loc='upper left')
-    #fig.show(block=False)
 
-    if mapme:
+    if mapme == 'True':
         try:
             map_fig = map_hdf5.mapme(fid, scale_dict, cutoff, include_list)
         except StandardError:

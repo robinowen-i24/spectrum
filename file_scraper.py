@@ -54,14 +54,12 @@ def get_per_tab_dict():
     dir = '/dls_sw/i24/scripts/darren/EDGE/'
     per_tab_dict = {}
     f = open(dir + 'periodic_table.csv', 'r')
-    print '\n', f
     for line in f.readlines():
         [z, mass, long_name, short_name] = line.rstrip('\r\n').split(',')
         per_tab_dict[short_name.title()] = [long_name.title(), int(z), float(mass)]
     f.close()
 
     f = open(dir + 'pymol_colors.txt', 'r')
-    print f
     for line in f.readlines():
         [long_name, r, g, b] = line.split()
         long_name = long_name.title()
@@ -72,7 +70,6 @@ def get_per_tab_dict():
     f.close()
 
     f = open('/dls_sw/i24/software/gda/config/lookupTables/mca_roi_conversion.txt', 'r')
-    print f
     scale_list = []
     for line in f.readlines()[2:]:
         if line.startswith('#'):
@@ -85,7 +82,6 @@ def get_per_tab_dict():
     f.close()
             
     f = open('/dls_sw/i24/software/gda/config/lookupTables/FluorescenceScanROILookupTable', 'r')
-    print f
     for line in f.readlines():
         if line.startswith('#'):
             continue

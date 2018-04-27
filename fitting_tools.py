@@ -6,7 +6,6 @@ def exp_func(x, a, b, c):
     x = np.linspace(0, 1, len(x))
     return a * np.exp(b*x) + c
 
-
 def lin_func(x, m, c):
     x = np.linspace(0, 1, len(x))
     return m*x + c
