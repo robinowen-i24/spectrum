@@ -106,7 +106,7 @@ def get_scale(curve, data):
 def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list):
     per_tab_dict = file_scraper.get_per_tab_dict()
     fig = plt.figure()
-    ax = fig.add_subplot(1,1,1, facecolor='0.2')
+    ax = fig.add_subplot(1,1,1)
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, wspace=0.0, hspace=0.0)
     ax.plot(vortex_nrg_axis, sum_spec, c='w', lw=1)
     scale_dict = {}
@@ -167,21 +167,8 @@ def get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cu
                 ax.annotate(elem, xy=(x,y), xycoords='data', xytext=(2,2), textcoords='offset points', color=elem_color, fontsize=15)
     return scale_dict
 
-def main(args):
-    fid=args.input_file
-    minimum_nrg  = args.minimum_energy
-    incident_nrg = args.incident_energy
-    cutoff       = args.scale_cutoff
-    mapme        = args.mapme
-    spread       = args.spread
-    offset       = args.offset
-    include_list = args.include_list
-    exclude_list = args.exclude_list
-    plot_indv    = args.plot_indv
-    for arg in vars(args):
-        print arg, getattr(args, arg)
+def run(fid, minimum_nrg, incident_nrg, cutoff, mapme, spread, offset, include_list, exclude_list, plot_indv):
     poss_emis_dict = possible_emissions(incident_nrg, minimum_nrg)
-
     #Get the Sum Spectra vs Energy from the hdf5 file
     vortex_nrg_axis, sum_spec = get_sum_spectrum(fid, plot_indv)
 
@@ -205,15 +192,29 @@ def main(args):
     print scale_dict 
     total = np.zeros((1, len(emis_nrg_axis)))
     print spread, offset 
-
-    if mapme == 'True':
+    if mapme == 'True' or mapme == True:
         try:
             map_fig = map_hdf5.mapme(fid, scale_dict, cutoff, include_list)
         except StandardError:
             print 'Mapping failed'
-
     plt.show()
+
+def main(args):
+    fid          = args.input_file
+    minimum_nrg  = args.minimum_energy
+    incident_nrg = args.incident_energy
+    cutoff       = args.scale_cutoff
+    mapme        = args.mapme
+    spread       = args.spread
+    offset       = args.offset
+    include_list = args.include_list
+    exclude_list = args.exclude_list
+    plot_indv    = args.plot_indv
+    for arg in vars(args):
+        print arg, getattr(args, arg)
+    run(fid, minimum_nrg, incident_nrg, cutoff, mapme, spread, offset, include_list, exclude_list, plot_indv)
     print 'EOM'
+
 
 if __name__ == '__main__':
     args = argparser()
