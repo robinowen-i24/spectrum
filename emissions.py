@@ -1,8 +1,9 @@
 import file_scraper
 import collections
 from pprint import pprint
+from itertools import product as iproduct
 
-def possible_emissions(incident_nrg, minimum_nrg=2000.0):
+def test_emissions(incident_nrg, minimum_nrg=2000.0):
     incident_nrg = float(incident_nrg)
     poss_dict = {}
     bne_dict, edge_names_list, emis_names_list = file_scraper.bne()
@@ -38,11 +39,6 @@ def possible_emissions(incident_nrg, minimum_nrg=2000.0):
                 emis_dict[elem]['kb3'] = bne_dict[elem]['kb3']
             except:
                 j=0
-        elif key.startswith('L1'):
-            try:
-                emis_dict[elem]['l1'] = bne_dict[elem]['l1']
-            except:
-                j=0
         elif key.startswith('L2'):
             try:
                 emis_dict[elem]['lb1'] = bne_dict[elem]['lb1']
@@ -65,7 +61,11 @@ def possible_emissions(incident_nrg, minimum_nrg=2000.0):
                 emis_dict[elem]['lb2'] = bne_dict[elem]['lb2']
             except:
                 j=0
-        elif key.startswith('M1'):
+            try:
+                emis_dict[elem]['l1'] = bne_dict[elem]['l1']
+            except:
+                j=0
+        elif key.startswith('M5'):
             try:
                 emis_dict[elem]['ma1'] = bne_dict[elem]['ma1']
             except:
@@ -76,7 +76,6 @@ def possible_emissions(incident_nrg, minimum_nrg=2000.0):
                emis_dict[elem].pop(k)
         if emis_dict[elem] == {}:
                emis_dict.pop(elem)
-    print len(emis_dict)
     return emis_dict
 
 def get_emissions(per_tab_dict, elem):
@@ -97,28 +96,57 @@ def get_emissions(per_tab_dict, elem):
         emis_line = per_tab_dict[elem][6]
     return emis_line
 
-def test_emissions(incident_energy, minimum_nrg=2000.0): 
+def get_possible_absorptions(elements, bne_dict, edge_names_list, minimum_energy, incident_energy):
+    possible_absorbs = []
+    for elem in elements:
+        for key in bne_dict[elem].keys():
+            if minimum_energy > bne_dict[elem][key]:
+               continue
+            elif incident_energy <= bne_dict[elem][key]:
+               continue
+            elif key not in edge_names_list:
+               continue
+            else:
+                possible_absorbs.append([elem, key]) 
+    return possible_absorbs
+   
+def get_allowed_emissions(bne_dict, incident_energy, minimum_energy, edge_names_list): 
+    elements = [elem for elem in bne_dict.keys()]
+    transitions = {'K': ['ka1', 'ka2', 'kb1', 'kb2', 'kb3'], 'L1':'None', 'L2':['lb1','lg1'] ,'L3':['la1','la2','lb2', 'l1'], 'M5':['ma1']}
+    possible_absorptions = get_possible_absorptions(elements, bne_dict, edge_names_list, minimum_energy, incident_energy)
+    possible_emissions = []
+    for elem, absorb in possible_absorptions:
+        for key in bne_dict[elem].keys():
+            try:
+               allowed_transitions = transitions[str(absorb.split('(')[0])]
+               if key in allowed_transitions: 
+                  if  bne_dict[elem][key][0] < minimum_energy:
+                      continue
+                  else:
+                           possible_emissions.append([elem, key])
+               else:
+                 continue
+            except:
+                 continue
+    return possible_emissions
+    
+def possible_emissions(incident_energy, minimum_energy=2000.0): 
     incident_nrg = float(incident_energy)
-    transitions = {'K': ['ka1', 'ka2', 'kb1', 'kb2', 'kb3'], 'L1':['L1'], 'L2':['lb1','lg1'] ,'L3':['la1','la2','lb2'], 'M1':'ma1'}
     bne_dict, edge_names_list, emis_names_list = file_scraper.bne()
-    elems = [elem for elem in bne_dict.keys()]
-    all_absorbs = [[elem, key] for elem in elems for key in bne_dict[elem].keys() if key in edge_names_list]
-    possible_absorbs = [[elem, key] for elem, key in all_absorbs if minimum_nrg < bne_dict[elem][key] < incident_nrg]
-    possible_emissions = [[elem, key] for elem, absorb in possible_absorbs for key in bne_dict[elem].keys() if key in emis_names_list and key.startswith(absorb[0].lower())]
-    possible_emissions = [[elem, emis] for elem, emis in possible_emissions if bne_dict[elem][emis][0] > minimum_nrg]
+    allowed_emissions_list = get_allowed_emissions(bne_dict, incident_energy, minimum_energy, edge_names_list) 
     emis_dict = collections.defaultdict(dict)
-    for elem, key in possible_emissions:
+    for elem, key in allowed_emissions_list:
         try:
            emis_dict[elem][key]
         except:
            emis_dict[elem][key] = bne_dict[elem][key]
-    print len(emis_dict)
     return emis_dict
     
 if __name__ == '__main__': 
-   test_dict = test_emissions(20000,2000)
-   emis_dict = possible_emissions(20000,2000)
-   for key in emis_dict.keys():
-       if emis_dict[key] != test_dict[key]:
-          print emis_dict[key]
-          print test_dict[key]
+   incident_energies = [12000, 4000, 8000, 20000, 17500, 100000, 0, 100000]
+   minimum_energies = [2000,  8000, 4000,  2000,  5000,      0, 0,  50000]
+   for i_e, m_e in zip(incident_energies, minimum_energies):
+       test_dict = test_emissions(i_e, m_e)
+       emis_dict = possible_emissions(i_e, m_e)
+       assert test_dict == emis_dict
+   print 'EOP'
