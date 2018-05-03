@@ -200,6 +200,7 @@ def run(fid, minimum_nrg, incident_nrg, cutoff, mapme, spread, offset, include_l
     plt.show()
 
 def main(args):
+    print 'start1'
     fid          = args.input_file
     minimum_nrg  = args.minimum_energy
     incident_nrg = args.incident_energy
