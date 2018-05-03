@@ -51,7 +51,7 @@ def bne():
     return bne, edge_names_list, emis_names_list
 
 def get_per_tab_dict():
-    dir = '/dls_sw/i24/scripts/darren/EDGE/'
+    dir = 'lookup_tables/'
     per_tab_dict = {}
     f = open(dir + 'periodic_table.csv', 'r')
     for line in f.readlines():
@@ -69,7 +69,7 @@ def get_per_tab_dict():
                v.append(rgb) 
     f.close()
 
-    f = open('/dls_sw/i24/software/gda/config/lookupTables/mca_roi_conversion.txt', 'r')
+    f = open('lookup_tables/mca_roi_conversion.txt', 'r')
     scale_list = []
     for line in f.readlines()[2:]:
         if line.startswith('#'):
@@ -81,7 +81,7 @@ def get_per_tab_dict():
     print 'Scale from Channel to Energy:', scale
     f.close()
             
-    f = open('/dls_sw/i24/software/gda/config/lookupTables/FluorescenceScanROILookupTable', 'r')
+    f = open('lookup_tables/FluorescenceScanROILookupTable', 'r')
     for line in f.readlines():
         if line.startswith('#'):
             continue
@@ -93,6 +93,7 @@ def get_per_tab_dict():
         per_tab_dict[short_name].append([emission_line, llm, hlm])
     f.close()
     return per_tab_dict
+    f = open('lookup_tables/FluorescenceScanROILookupTable', 'r')
 
 def get_gridscan_data(h5_full_path_fid):
     path = '/'.join(h5_full_path_fid.split('/')[:-1])
