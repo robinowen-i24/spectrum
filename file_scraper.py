@@ -93,7 +93,6 @@ def get_per_tab_dict():
         per_tab_dict[short_name].append([emission_line, llm, hlm])
     f.close()
     return per_tab_dict
-    f = open('lookup_tables/FluorescenceScanROILookupTable', 'r')
 
 def get_gridscan_data(h5_full_path_fid):
     path = '/'.join(h5_full_path_fid.split('/')[:-1])
@@ -136,3 +135,34 @@ def get_h5py_data(fid):
     h5f.close()
     return array
 
+def which_round(energy, attenuation_energy_low, attenuation_energy_high):
+    low  = abs(attenuation_energy_low  - energy)
+    high = abs(attenuation_energy_high - energy)
+    if high > low:
+       return True
+    elif high < low:
+       return False
+    else:
+       return False
+
+def lookup_attenuation_coefficient(emission_energy):
+    emission_energy = emission_energy*(10**-6)
+    with open('lookup_tables/coef.dat', 'r') as coefficients:
+        attenuation_energy_low =  0.00001
+        mu_low = 4000
+        for line in coefficients.readlines()[4:]:
+            attenuation_energy_high, mu_high, mu_en = [float(x) for x in line.split()]
+            if which_round(emission_energy, attenuation_energy_low,attenuation_energy_high):
+               attenuation_coefficient = mu_low
+               break
+            else:
+               attenuation_energy_low=attenuation_energy_high
+               mu_low=mu_high
+    print attenuation_coefficient, " for energy", emission_energy, "rounded too", attenuation_energy_low
+    return attenuation_coefficient
+
+if __name__ == '__main__':
+   mu = lookup_attenuation_coefficient(12800)
+   print mu
+   assert round(mu,3) == 1.614
+   print 'EOP'

@@ -1,4 +1,5 @@
 import file_scraper
+from math import exp
 import collections
 from pprint import pprint
 from itertools import product as iproduct
@@ -141,6 +142,13 @@ def possible_emissions(incident_energy, minimum_energy=2000.0):
         except:
            emis_dict[elem][key] = bne_dict[elem][key]
     return emis_dict
+
+def probability_of_transmission(emission_energy, relative_intensity):
+    air_density=0.001225 #g/cm^3
+    detector_distance = 7  #attenuation length in cm
+    coefficient = file_scraper.lookup_attenuation_coefficient(emission_energy) # psuedo code
+    intensity_det_dist = relative_intensity * exp(-coefficient*air_density*detector_distance)
+    return intensity_det_dist 
     
 if __name__ == '__main__': 
    incident_energies = [12000, 4000, 8000, 20000, 17500, 100000, 0, 100000]
