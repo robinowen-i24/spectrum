@@ -140,7 +140,9 @@ def possible_emissions(incident_energy, minimum_energy=2000.0):
         try:
            emis_dict[elem][key]
         except:
-           emis_dict[elem][key] = bne_dict[elem][key]
+           emission_energy, relative_intensity = bne_dict[elem][key]
+           transmission_intensity = probability_of_transmission(emission_energy, relative_intensity)
+           emis_dict[elem][key] = (emission_energy, transmission_intensity)
     return emis_dict
 
 def probability_of_transmission(emission_energy, relative_intensity):
