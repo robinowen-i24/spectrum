@@ -78,7 +78,7 @@ def get_sum_spectrum(fid, plot_indv):
 
     #shift vertically
     
-    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped - 8.0 
+    spectrum_sum_scal_mapped = spectrum_sum_scal_mapped #- 8.0 
     return one_ev_energy_axis, spectrum_sum_scal_mapped
 
 def get_scale(curve, data):
