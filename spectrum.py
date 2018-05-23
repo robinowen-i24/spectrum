@@ -17,7 +17,7 @@ from matplotlib.colors import LinearSegmentedColormap
 def argparser():
     parser = argparse.ArgumentParser(description='SPECTRUM \n\
                                                   Fluoresence spectra analysis and element mapping \n\
-                                                  https://github.com/DarrenSherrell/spectrum')
+                                                  https://github.com/beamline-i24/spectrum')
     parser.add_argument('input_file', metavar='fid', type=str,
                         help='hdf5 file location, i.e. /path/to/my/file.hdf5')
     parser.add_argument('-ie', '--incident_energy',  type=int, default = 20000,
@@ -189,12 +189,12 @@ def run(fid, minimum_nrg, incident_nrg, cutoff, mapme, spread, offset, include_l
         background_data = ft.get_background(emis_nrg_axis, sum_spec_cut)
 
     scale_dict = get_scale_dict(poss_emis_dict, vortex_nrg_axis, sum_spec, spread, offset, cutoff, exclude_list, include_list)
-    print scale_dict 
+    print scale_dict
     total = np.zeros((1, len(emis_nrg_axis)))
     print spread, offset 
     if mapme == 'True' or mapme == True:
         try:
-            map_fig = map_hdf5.mapme(fid, scale_dict, cutoff, include_list)
+            map_fig = map_hdf5.mapme(fid, scale_dict, cutoff, include_list, poss_emis_dict)
         except StandardError:
             print 'Mapping failed'
     plt.show()
