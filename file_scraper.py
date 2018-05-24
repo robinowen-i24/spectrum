@@ -51,48 +51,48 @@ def bne():
     return bne, edge_names_list, emis_names_list
 
 def get_per_tab_dict():
-    dir = 'lookup_tables/'
+    directory = 'lookup_tables'
     per_tab_dict = {}
-    f = open(dir + 'periodic_table.csv', 'r')
-    for line in f.readlines():
-        [z, mass, long_name, short_name] = line.rstrip('\r\n').split(',')
-        per_tab_dict[short_name.title()] = [long_name.title(), int(z), float(mass)]
-    f.close()
+    with open(os.path.join(directory,'periodic_table.csv'), 'r') as p_table:
+        for line in p_table.readlines():
+            [z, mass, long_name, short_name] = line.rstrip('\r\n').split(',')
+            per_tab_dict[short_name.title()] = [long_name.title(), int(z), float(mass)]
 
-    f = open(dir + 'pymol_colors.txt', 'r')
-    for line in f.readlines():
-        [long_name, r, g, b] = line.split()
-        long_name = long_name.title()
-        rgb = (float(r), float(g), float(b))
-        for z, v in per_tab_dict.items():
-           if long_name in v:
-               v.append(rgb) 
-    f.close()
+    with open(os.path.join(directory,'pymol_colors.txt'), 'r') as pymol_colors:
+        for line in pymol_colors.readlines():
+            [long_name, r, g, b] = line.split()
+            long_name = long_name.title()
+            rgb = (float(r), float(g), float(b))
+            for z, v in per_tab_dict.items():
+               if long_name in v:
+                   v.append(rgb) 
 
-    f = open('lookup_tables/mca_roi_conversion.txt', 'r')
-    scale_list = []
-    for line in f.readlines()[2:]:
-        if line.startswith('#'):
-            continue
-        else:
-            energy, chnl = [float(x) for x in line.split()]
-            scale_list.append(energy / chnl)
-    scale = np.array(scale_list).mean()
-    print 'Scale from Channel to Energy:', scale
-    f.close()
+    scale = get_fluoresence_scale(directory)
             
-    f = open('lookup_tables/FluorescenceScanROILookupTable', 'r')
-    for line in f.readlines():
-        if line.startswith('#'):
-            continue
-        [Z_K, llm, hlm] = line.split(',')
-        short_name = Z_K.split('_')[0].title()
-        emission_line = Z_K.split('_')[1].title()
-        llm = int(float(llm) / scale)
-        hlm = int(float(hlm) / scale)
-        per_tab_dict[short_name].append([emission_line, llm, hlm])
-    f.close()
+    with open(os.path.join(directory,'FluorescenceScanROILookupTable'), 'r') as fluo_roi:
+        for line in fluo_roi.readlines():
+            if line.startswith('#'):
+                continue
+            [Z_K, llm, hlm] = line.split(',')
+            short_name = Z_K.split('_')[0].title()
+            emission_line = Z_K.split('_')[1].title()
+            llm = int(float(llm) / scale)
+            hlm = int(float(hlm) / scale)
+            per_tab_dict[short_name].append([emission_line, llm, hlm])
     return per_tab_dict
+
+def get_fluoresence_scale(directory):
+    with open(os.path.join(directory,'mca_roi_conversion.txt'), 'r') as roi_conversion:
+        scale_list = []
+        for line in roi_conversion.readlines()[2:]:
+            if line.startswith('#'):
+                continue
+            else:
+                energy, chnl = [float(x) for x in line.split()]
+                scale_list.append(energy / chnl)
+        scale = np.array(scale_list).mean()
+        print 'Scale from Channel to Energy:', scale
+    return scale 
 
 def get_gridscan_data(h5_full_path_fid):
     path = '/'.join(h5_full_path_fid.split('/')[:-1])
@@ -158,7 +158,6 @@ def lookup_attenuation_coefficient(emission_energy):
             else:
                attenuation_energy_low=attenuation_energy_high
                mu_low=mu_high
-    print attenuation_coefficient, " for energy", emission_energy, "rounded too", attenuation_energy_low
     return attenuation_coefficient
 
 if __name__ == '__main__':

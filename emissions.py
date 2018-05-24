@@ -148,7 +148,7 @@ def possible_emissions(incident_energy, minimum_energy=2000.0):
 def probability_of_transmission(emission_energy, relative_intensity):
     air_density=0.001225 #g/cm^3
     detector_distance = 7  #attenuation length in cm
-    coefficient = file_scraper.lookup_attenuation_coefficient(emission_energy) # psuedo code
+    coefficient = file_scraper.lookup_attenuation_coefficient(emission_energy)
     intensity_det_dist = relative_intensity * exp(-coefficient*air_density*detector_distance)
     return intensity_det_dist 
     
