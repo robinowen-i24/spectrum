@@ -129,8 +129,11 @@ def mapme(fid, scale_dict, cutoff, include_list):
     print include_list
     #elem_list = elem_list + include_list
     for elem in elem_list:
+        print elem
 	emission_line = get_emissions(per_tab_dict, elem)
+        print elem
         llm, hlm = emission_line[1], emission_line[2]
+        print elem
 	Z = elem.split('_')[0] 
         print elem, '\t', emission_line
         slc_array = slice_and_sum_array(result_array, [llm, hlm])
