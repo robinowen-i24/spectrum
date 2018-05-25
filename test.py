@@ -3,12 +3,13 @@ import spectrum
 print 'Start Test'
 
 fid          = 'test_data/33B10F_1_zlayer_1.hdf5' 
-minimum_nrg  = 4000.0 
+minimum_nrg  = 2000.0 
 incident_nrg = 17000.0
 cutoff       = 2.5 
-mapme        = True
+mapme        = False
+#mapme        = True
 spread       = 110 
-offset       = -20
+offset       = 0
 include_list = ['Fe', 'Se', 'K', 'V', 'Ti', 'Cu']
 exclude_list = 'all'
 plot_indv    = False
